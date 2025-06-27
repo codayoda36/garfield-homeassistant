@@ -48,7 +48,7 @@ class ExampleSensor(SensorEntity):
 
     @property
     def native_value(self):
-        return "self._last_updated_attribute"
+        return "value"
 
     @property
     def extra_state_attributes(self):
@@ -71,6 +71,7 @@ class ExampleSensor(SensorEntity):
         self._state_update_task.cancel()
 
     async def async_update(self) -> None: # 'self' would be passed as the entity instance
+        _LOGGER.error("fetching new url")
         """
         Fetches the GoComics Garfield page, extracts the daily comic image URL
         from the JSON-LD script, and logs it.
