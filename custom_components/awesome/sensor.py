@@ -48,7 +48,7 @@ class ExampleSensor(SensorEntity):
 
     @property
     def native_value(self):
-        return self._last_updated_attribute
+        return "self._last_updated_attribute"
 
     @property
     def extra_state_attributes(self):
