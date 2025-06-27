@@ -48,7 +48,7 @@ class ExampleSensor(SensorEntity):
 
     @property
     def native_value(self):
-        return "self._last_updated_attribute"
+        return self
 
     @property
     def extra_state_attributes(self):
@@ -104,7 +104,7 @@ class ExampleSensor(SensorEntity):
                         (json_data.get('contentUrl') or json_data.get('url'))):
                     
                         comic_image_url = json_data.get('contentUrl') or json_data.get('url')
-                        self.set_attribute("url", comic_image_url)
+                        self.native_value(comic_image_url)
                         _LOGGER.info(f"Daily Garfield Comic URL: {comic_image_url}") # Log the URL
                         break # Found the URL, exit loop
 
