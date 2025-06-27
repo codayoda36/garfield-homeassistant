@@ -44,7 +44,7 @@ class ExampleSensor(SensorEntity):
 
     @property
     def name(self):
-        return self._sensor_name
+        return self.garfieldurl
 
     @property
     def native_value(self):
