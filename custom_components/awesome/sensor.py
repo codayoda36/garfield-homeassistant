@@ -64,7 +64,7 @@ class ExampleSensor(SensorEntity):
     async def async_added_to_hass(self):
         """Register state update callback."""
         self.initialize_attributes()
-        self._state_update_task = async_track_time_interval(self.hass, self._update_frequency, self.async_update)
+        self._state_update_task = async_track_time_interval(self.hass, timedelta(hours=24), self.async_update)
 
     async def async_will_remove_from_hass(self):
         """Unregister state update callback."""
