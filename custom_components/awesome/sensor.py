@@ -63,7 +63,7 @@ class ExampleSensor(SensorEntity):
         Fetches the GoComics Garfield page, extracts the daily comic image URL
         from the JSON-LD script, and updates the sensor state.
         """
-        _LOGGER.debug("Attempting to fetch new Garfield URL.")
+        _LOGGER.warning("Attempting to fetch new Garfield URL.")
         url = 'https://www.gocomics.com/garfield'
         fetched_comic_image_url = None
 
