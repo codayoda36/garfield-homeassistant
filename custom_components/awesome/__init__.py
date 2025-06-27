@@ -1,0 +1,1 @@
+"""Garfield comic sensor integration"""
