@@ -78,28 +78,36 @@ class ExampleSensor(SensorEntity):
             today = datetime.now()
             formatted_date = today.strftime('%B %d, %Y').replace(' 0', ' ')
 
-            json_ld_scripts = soup.find_all('script', type='application/ld+json')
+            # json_ld_scripts = soup.find_all('script', type='application/ld+json')
 
-            for script in json_ld_scripts:
-                try:
-                    json_data = json.loads(script.string)
+            # for script in json_ld_scripts:
+            #     try:
+            #         json_data = json.loads(script.string)
 
-                    if (json_data.get('@type') == 'ImageObject' and
-                        'Garfield' in json_data.get('name', '') and
-                        formatted_date in json_data.get('name', '') and
-                        (json_data.get('contentUrl') or json_data.get('url'))):
+            #         if (json_data.get('@type') == 'ImageObject' and
+            #             'Garfield' in json_data.get('name', '') and
+            #             formatted_date in json_data.get('name', '') and
+            #             (json_data.get('contentUrl') or json_data.get('url'))):
 
-                        fetched_comic_image_url = json_data.get('contentUrl') or json_data.get('url')
-                        _LOGGER.info(f"Successfully fetched Daily Garfield Comic URL: {fetched_comic_image_url}")
-                        break
+            #             fetched_comic_image_url = json_data.get('contentUrl') or json_data.get('url')
+            #             _LOGGER.info(f"Successfully fetched Daily Garfield Comic URL: {fetched_comic_image_url}")
+            #             break
 
-                except json.JSONDecodeError:
-                    _LOGGER.debug("Skipping malformed JSON-LD script.")
-                    continue
-                except (AttributeError, TypeError):
-                    _LOGGER.debug("Skipping JSON-LD script with invalid or no content.")
-                    continue
+            #     except json.JSONDecodeError:
+            #         _LOGGER.debug("Skipping malformed JSON-LD script.")
+            #         continue
+            #     except (AttributeError, TypeError):
+            #         _LOGGER.debug("Skipping JSON-LD script with invalid or no content.")
+            #         continue
 
+            img_tag = soup.find("img", class_=lambda c: c and "Comic_comic__image" in c)
+
+            if img_tag:
+                fetched_comic_image_url = img_tag.get("src")
+                _LOGGER.info(f"Fetched Garfield comic URL via <img>: {fetched_comic_image_url}")
+            else:
+                _LOGGER.warning("Failed to locate Garfield <img> tag.")
+                
             if fetched_comic_image_url:
                 self._attr_native_value = fetched_comic_image_url
             else:
