@@ -64,7 +64,7 @@ class GarfieldComicSensor(SensorEntity):
 
     async def schedule_midnight_update(self):
         """Schedule the sensor to update at midnight local time."""
-        tz = pytz.timezone("YOUR_TIMEZONE")  # e.g., "America/New_York"
+        tz = pytz.timezone("Europe/Amsterdam")  # e.g., "America/New_York"
         now = datetime.now(tz)
         midnight = datetime.combine(now.date() + timedelta(days=1), datetime.min.time())
         midnight = tz.localize(midnight)
