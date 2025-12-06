@@ -59,67 +59,29 @@ class ExampleSensor(SensorEntity):
             _LOGGER.info("Garfield URL update listener successfully removed.")
 
     async def async_update(self) -> None:
-        """
-        Fetches the GoComics Garfield page, extracts the daily comic image URL
-        from the JSON-LD script, and updates the sensor state.
-        """
-        _LOGGER.warning("Attempting to fetch new Garfield URL.")
-        url = 'https://www.gocomics.com/garfield'
-        fetched_comic_image_url = None
+    """
+    Generates the Garfield comic URL directly using the Uclick pattern:
+    http://picayune.uclick.com/comics/ga/YYYY/gaYYMMDD.gif
+    """
+    try:
+        today = datetime.now()
 
-        try:
-            async with aiohttp.ClientSession() as session:
-                async with session.get(url, timeout=15) as response:
-                    response.raise_for_status()
-                    html_content = await response.text()
+        yyyy = today.strftime("%Y")  # e.g. 2025
+        yy   = today.strftime("%y")  # e.g. 25
+        mm   = today.strftime("%m")  # e.g. 12
+        dd   = today.strftime("%d")  # e.g. 06
 
-            soup = BeautifulSoup(html_content, 'html.parser')
+        # Build the URL
+        url = f"http://picayune.uclick.com/comics/ga/{yyyy}/ga{yy}{mm}{dd}.gif"
 
-            today = datetime.now()
-            formatted_date = today.strftime('%B %d, %Y').replace(' 0', ' ')
+        _LOGGER.warning(f"Generated Garfield comic URL: {url}")
 
-            # json_ld_scripts = soup.find_all('script', type='application/ld+json')
+        # Set sensor value
+        self._attr_native_value = url
 
-            # for script in json_ld_scripts:
-            #     try:
-            #         json_data = json.loads(script.string)
+    except Exception as err:
+        _LOGGER.error(f"Unexpected error generating Garfield URL: {err}")
+        self._attr_native_value = "error_generating"
 
-            #         if (json_data.get('@type') == 'ImageObject' and
-            #             'Garfield' in json_data.get('name', '') and
-            #             formatted_date in json_data.get('name', '') and
-            #             (json_data.get('contentUrl') or json_data.get('url'))):
-
-            #             fetched_comic_image_url = json_data.get('contentUrl') or json_data.get('url')
-            #             _LOGGER.info(f"Successfully fetched Daily Garfield Comic URL: {fetched_comic_image_url}")
-            #             break
-
-            #     except json.JSONDecodeError:
-            #         _LOGGER.debug("Skipping malformed JSON-LD script.")
-            #         continue
-            #     except (AttributeError, TypeError):
-            #         _LOGGER.debug("Skipping JSON-LD script with invalid or no content.")
-            #         continue
-
-            img_tag = soup.find("img", class_=lambda c: c and "Comic_comic__image" in c)
-
-            if img_tag:
-                fetched_comic_image_url = img_tag.get("src")
-                _LOGGER.info(f"Fetched Garfield comic URL via <img>: {fetched_comic_image_url}")
-            else:
-                _LOGGER.warning("Failed to locate Garfield <img> tag.")
-                
-            if fetched_comic_image_url:
-                self._attr_native_value = fetched_comic_image_url
-            else:
-                _LOGGER.warning(f"Could not find the daily Garfield comic URL for {formatted_date}.")
-                if self._attr_native_value is None:
-                    self._attr_native_value = "unknown"
-
-        except aiohttp.ClientError as err:
-            _LOGGER.error(f"Error fetching data from GoComics: {err}")
-            self._attr_native_value = "error_fetching"
-        except Exception as err:
-            _LOGGER.error(f"An unexpected error occurred while parsing comic data: {err}")
-            self._attr_native_value = "error_parsing"
-
-        self.schedule_update_ha_state()
+    # Update HA state
+    self.schedule_update_ha_state()
