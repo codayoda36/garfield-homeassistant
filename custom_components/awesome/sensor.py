@@ -66,7 +66,7 @@ class GarfieldComicSensor(SensorEntity):
         if scheduled_time <= now:
             scheduled_time += timedelta(days=1)
 
-        _LOGGER.info(f"Scheduling next Garfield update at {scheduled_time.isoformat()}")
+        _LOGGER.warning(f"Scheduling next Garfield update at {scheduled_time.isoformat()}")
         self._remove_listener = async_track_point_in_utc_time(
             self._hass,
             self.daily_callback,
@@ -98,7 +98,7 @@ class GarfieldComicSensor(SensorEntity):
 
             url = f"http://picayune.uclick.com/comics/ga/{yyyy}/ga{yy}{mm}{dd}{extension}"
 
-            _LOGGER.info(f"Generated Garfield comic URL for {yesterday}: {url}")
+            _LOGGER.warning(f"Generated Garfield comic URL for {yesterday}: {url}")
 
             self._attr_native_value = url
 
