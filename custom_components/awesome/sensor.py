@@ -1,17 +1,11 @@
 import logging
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, time
 import pytz
-import aiohttp
 from homeassistant.components.sensor import SensorEntity
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.typing import ConfigType, DiscoveryInfoType
-from homeassistant.helpers.event import (
-    async_track_time_interval,
-    async_track_point_in_utc_time
-)
-from bs4 import BeautifulSoup
-import json
+from homeassistant.helpers.event import async_track_point_in_utc_time
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -24,6 +18,7 @@ def setup_platform(
     """Set up the Garfield URL sensor."""
     _LOGGER.debug("Setting up Garfield URL sensor platform.")
     add_entities([GarfieldComicSensor(hass)])
+
 
 class GarfieldComicSensor(SensorEntity):
     """Home Assistant sensor to provide the daily Garfield comic URL."""
@@ -51,9 +46,8 @@ class GarfieldComicSensor(SensorEntity):
         _LOGGER.debug("Garfield URL sensor added to Home Assistant.")
         # Initial update
         await self.async_update()
-
-        # Schedule update at midnight local time
-        await self.schedule_midnight_update()
+        # Schedule update at midnight Amsterdam time
+        await self.schedule_daily_update(hour=0, minute=0)
 
     async def async_will_remove_from_hass(self):
         """Unregister scheduled callbacks."""
@@ -62,38 +56,49 @@ class GarfieldComicSensor(SensorEntity):
             self._remove_listener()
             _LOGGER.info("Garfield URL update listener successfully removed.")
 
-    async def schedule_midnight_update(self):
-        """Schedule the sensor to update at midnight local time."""
-        tz = pytz.timezone("Europe/Amsterdam")  # e.g., "America/New_York"
+    async def schedule_daily_update(self, hour=0, minute=0):
+        """Schedule the sensor to update at a specific time (Amsterdam time)."""
+        tz = pytz.timezone("Europe/Amsterdam")
         now = datetime.now(tz)
-        midnight = datetime.combine(now.date() + timedelta(days=1), datetime.min.time())
-        midnight = tz.localize(midnight)
+        # Next scheduled time
+        scheduled_time = datetime.combine(now.date(), time(hour=hour, minute=minute))
+        scheduled_time = tz.localize(scheduled_time)
+        if scheduled_time <= now:
+            scheduled_time += timedelta(days=1)
 
-        _LOGGER.warning(f"Scheduling next Garfield update at {midnight.isoformat()}")
+        _LOGGER.info(f"Scheduling next Garfield update at {scheduled_time.isoformat()}")
         self._remove_listener = async_track_point_in_utc_time(
             self._hass,
-            self.midnight_callback,
-            midnight.astimezone(pytz.utc)
+            self.daily_callback,
+            scheduled_time.astimezone(pytz.utc)
         )
 
-    async def midnight_callback(self, now):
-        """Callback to run at midnight to update the sensor."""
+    async def daily_callback(self, now):
+        """Callback to run at scheduled time to update the sensor."""
         await self.async_update()
-        # Schedule next midnight update
-        await self.schedule_midnight_update()
+        # Schedule next day
+        await self.schedule_daily_update(hour=0, minute=0)
 
     async def async_update(self) -> None:
         """Generate the daily Garfield comic URL."""
         try:
-            today = datetime.now()
-            yyyy = today.strftime("%Y")  # e.g., 2025
-            yy = today.strftime("%y")    # e.g., 25
-            mm = today.strftime("%m")    # e.g., 12
-            dd = today.strftime("%d")    # e.g., 06
+            # Always use yesterday's date
+            tz = pytz.timezone("Europe/Amsterdam")
+            today = datetime.now(tz).date()
+            yesterday = today - timedelta(days=1)
 
-            url = f"http://picayune.uclick.com/comics/ga/{yyyy}/ga{yy}{mm}{dd}.gif"
+            yyyy = yesterday.strftime("%Y")  # e.g., 2025
+            yy = yesterday.strftime("%y")    # e.g., 25
+            mm = yesterday.strftime("%m")    # e.g., 12
+            dd = yesterday.strftime("%d")    # e.g., 05
 
-            _LOGGER.warning(f"Generated Garfield comic URL: {url}")
+            # Sunday uses .jpg, others .gif
+            weekday = yesterday.weekday()  # Monday=0 ... Sunday=6
+            extension = ".jpg" if weekday == 6 else ".gif"
+
+            url = f"http://picayune.uclick.com/comics/ga/{yyyy}/ga{yy}{mm}{dd}{extension}"
+
+            _LOGGER.info(f"Generated Garfield comic URL for {yesterday}: {url}")
 
             self._attr_native_value = url
 
@@ -101,4 +106,5 @@ class GarfieldComicSensor(SensorEntity):
             _LOGGER.error(f"Unexpected error generating Garfield URL: {err}")
             self._attr_native_value = "error_generating"
 
+        # Update HA state
         self.schedule_update_ha_state()
