@@ -57,7 +57,7 @@ class ExampleSensor(SensorEntity):
         if self._remove_interval_listener:
             self._remove_interval_listener()
             _LOGGER.info("Garfield URL update listener successfully removed.")
-
+    
     async def async_update(self) -> None:
         try:
             today = datetime.now()
@@ -79,5 +79,6 @@ class ExampleSensor(SensorEntity):
             _LOGGER.error(f"Unexpected error generating Garfield URL: {err}")
             self._attr_native_value = "error_generating"
 
-    # Update HA state
-    self.schedule_update_ha_state()
+        # Update HA state
+        self.schedule_update_ha_state()
+
