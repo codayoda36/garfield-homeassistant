@@ -59,29 +59,25 @@ class ExampleSensor(SensorEntity):
             _LOGGER.info("Garfield URL update listener successfully removed.")
 
     async def async_update(self) -> None:
-    """
-    Generates the Garfield comic URL directly using the Uclick pattern:
-    http://picayune.uclick.com/comics/ga/YYYY/gaYYMMDD.gif
-    """
-    try:
-        today = datetime.now()
+        try:
+            today = datetime.now()
 
-        yyyy = today.strftime("%Y")  # e.g. 2025
-        yy   = today.strftime("%y")  # e.g. 25
-        mm   = today.strftime("%m")  # e.g. 12
-        dd   = today.strftime("%d")  # e.g. 06
+            yyyy = today.strftime("%Y")  # e.g. 2025
+            yy   = today.strftime("%y")  # e.g. 25
+            mm   = today.strftime("%m")  # e.g. 12
+            dd   = today.strftime("%d")  # e.g. 06
 
-        # Build the URL
-        url = f"http://picayune.uclick.com/comics/ga/{yyyy}/ga{yy}{mm}{dd}.gif"
+            # Build the URL
+            url = f"http://picayune.uclick.com/comics/ga/{yyyy}/ga{yy}{mm}{dd}.gif"
 
-        _LOGGER.warning(f"Generated Garfield comic URL: {url}")
+            _LOGGER.warning(f"Generated Garfield comic URL: {url}")
 
-        # Set sensor value
-        self._attr_native_value = url
+            # Set sensor value
+            self._attr_native_value = url
 
-    except Exception as err:
-        _LOGGER.error(f"Unexpected error generating Garfield URL: {err}")
-        self._attr_native_value = "error_generating"
+        except Exception as err:
+            _LOGGER.error(f"Unexpected error generating Garfield URL: {err}")
+            self._attr_native_value = "error_generating"
 
     # Update HA state
     self.schedule_update_ha_state()
